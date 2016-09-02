@@ -1,0 +1,1 @@
+@cmd /k call %~dp0bin\env.bat;
