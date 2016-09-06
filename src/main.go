@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"time"
 	"github.com/Comdex/imgo"
-	"image/png"
 )
 
 func newSession() (*webdriver.Session, error) {//创建会话
@@ -108,11 +107,10 @@ func CrackAuthCode(s *webdriver.Session)([]byte,[]byte,[]byte,error){
 }
 
 type myrgb struct {
-	r uint8
-	g uint8
-	b uint8
-}
-//绝对值
+	R uint8
+	G uint8
+	B uint8
+}//绝对值
 func abs(x uint8)uint8{
 	if x < 0 {
 		return -x
@@ -120,7 +118,7 @@ func abs(x uint8)uint8{
 	return x
 }
 func (c *myrgb)类似(a *myrgb,l uint8)bool{
-	if abs(c.b - a.b) < l && abs(c.g - a.g) < l && abs(c.b - a.b) < l{
+	if abs(c.B - a.B) < l && abs(c.G - a.G) < l && abs(c.R - a.R) < l{
 		return true
 	}
 return false
@@ -151,7 +149,6 @@ func main() {
 		log.Println("输入密码2失败：", err)
 		return
 	}
-	////*[@id="geetest_1472439080825"]/div[2]/div[2]/div[2]/div[2]
 	//破解滑动验证码
 	_,_,_,err=CrackAuthCode(s)
 	if err!=nil{
@@ -170,25 +167,36 @@ func main() {
 	log.Println("高度和宽度：",height,width)
 	//计算相邻的point的色差，色差较小的点组成的线的长度不能小于 定长
 
+   //rgb :=imgo.NewRGBAMatrix(height,width)
 
 
+	//wmb, _ := os.Open("I:\\screen3.png")
+	//watermark, _ := png.Decode(wmb)
+	//defer wmb.Close()
+	rgbmatrix := make([][]*myrgb,height)//创建一个数组保存RGB
+	for i,_:=range rgbmatrix{
+		rgbmatrix[i]=make([]*myrgb,width)
+	}
 
-	wmb, _ := os.Open("I:\\screen3.png")
-	watermark, _ := png.Decode(wmb)
-	defer wmb.Close()
-	rgbmatrix := make([][]myrgb,height*width)//创建一个数组保存RGB
 
-	for x:=0;x<width;x++{
-		for y:=0;y<height;y++{
-			c := watermark.At(x,y)
-			r,g,b,_:=c.RGBA()
+	////1、遍历所有像素点
+	for x:=0;x<height;x++{
+		for y:=0;y<width;y++{
+			//c := watermark.At(x,y)
+			//r,g,b,_:=c.RGBA()
+			//&myrgb{r,g,b} *myrgb{r,g,b} myrgb{r,g,b}
+			r:=mImg[x][y][0]
+			g:=mImg[x][y][1]
+			b:=mImg[x][y][2]
+			//log.Println("所有的RGB值：",r,g,b)
 			rgbmatrix[x][y]=&myrgb{r,g,b}
 		}
 	}
-
+	log.Println("rgbmatrix：",rgbmatrix[115][259].R,rgbmatrix[115][259].G,rgbmatrix[115][259].B)
+	//2、对比rgb值近似的点
 	for x,col := range rgbmatrix{
 		for y,p := range col{
-			if p.类似(rgbmatrix[x+1][y],10){
+			if p.类似(rgbmatrix[x][y],10){
 				log.Println("x和y的坐标：",x,y)
 			}
 		}
